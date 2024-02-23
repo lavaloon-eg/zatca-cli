@@ -86,7 +86,7 @@ fun main(args: Array<String>) {
         }
 
         if (options.version == true) {
-            Ok("Version: 1.1.0")
+            Ok("Version: 1.2.0")
         }
 
         when (commander.parsedCommand) {
