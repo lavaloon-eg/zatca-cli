@@ -11,7 +11,6 @@ import org.apache.log4j.AppenderSkeleton
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.spi.LoggingEvent
-import java.util.*
 import kotlin.system.exitProcess
 
 @Serializable
@@ -71,7 +70,7 @@ fun main(args: Array<String>) {
         val validate = ValidateCommand(infoListener, errorListener)
 
         val commander = JCommander.newBuilder()
-            .programName("lava-zatca")
+            .programName("zatca-cli")
             .addObject(options)
             .addCommand(csr)
             .addCommand(sign)

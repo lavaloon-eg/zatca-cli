@@ -1,5 +1,5 @@
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
 }
-rootProject.name = "lava-zatca"
+rootProject.name = "zatca-cli"
 

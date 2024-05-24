@@ -33,7 +33,7 @@ class ValidateCommand(private val infoListener: LogEventListener, private val er
     @Parameter(
         names = ["-b", "--base-path"],
         required = true,
-        description = "Base path of lava-zatca, under which xsd and schematrons can be found"
+        description = "Base path of zatca-cli, under which xsd and schematrons can be found"
     )
     lateinit var basePath: String
 
