@@ -8,6 +8,8 @@ to a section with the version name.
 
 ## Pending Changes
 
+## 2.0.1
+
 * Fix simulation environment support by adding `-s` (`--simulation`) flag to CSR generation.
 
 ## 2.0.0
