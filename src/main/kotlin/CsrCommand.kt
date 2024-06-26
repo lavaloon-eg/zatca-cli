@@ -19,6 +19,9 @@ class CsrCommand(private val errorListener: LogEventListener) {
     @Parameter(names = ["-p", "--pem"])
     var outputPem = false
 
+    @Parameter(names = ["-s", "--simulation"], description = "Indicates that the CSR is for the simulation environment")
+    var simulation: Boolean = false
+
     fun run() {
         val props = ApplicationPropertyDto()
         props.isGenerateCsr = true
@@ -26,6 +29,7 @@ class CsrCommand(private val errorListener: LogEventListener) {
         props.privateKeyFileName = outputKey
         props.csrConfigFileName = config
         props.isOutputPemFormat = outputPem
+        props.isSimulation = simulation
 
         val service = CsrGenerationService()
         if (!service.generate(props))
