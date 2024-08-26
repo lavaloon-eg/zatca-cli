@@ -13,6 +13,8 @@ import org.apache.log4j.AppenderSkeleton
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.spi.LoggingEvent
+import java.io.FileOutputStream
+import java.nio.file.Path
 import kotlin.system.exitProcess
 
 @Serializable
@@ -34,6 +36,15 @@ fun Ok(msg: String) {
 fun Err(msg: String, errors: Array<String> = arrayOf(), exitCode: Int = 1) {
     println(Json.encodeToString(Result(msg, errors, null)))
     exitProcess(exitCode)
+}
+
+fun writeTempFile(prefix: String, content: String): Path {
+    val path = kotlin.io.path.createTempFile(prefix = prefix)
+    FileOutputStream(path.toFile()).use {
+        it.write(content.encodeToByteArray())
+    }
+
+    return path
 }
 
 

@@ -3,25 +3,27 @@ package com.lavaloon.zatca
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import com.zatca.config.ResourcesPaths
-import com.zatca.sdk.dto.ApplicationPropertyDto
-import com.zatca.sdk.service.InvoiceValidationService
+import com.zatca.sdk.service.flow.ValidationProcessorImpl
 import kotlinx.serialization.Serializable
 import java.io.File
-import java.io.FileOutputStream
-import java.nio.file.Path
 import java.nio.file.Paths
 
 @Serializable
-data class ValidateResult(val messages: Array<String>, val errorsAndWarnings: Array<String>)
+data class ValidationDetails(
+    val isValid: Boolean,
+    val isValidQr: Boolean,
+    val isValidSignature: Boolean,
+    val errors: Map<String, String>,
+    val warnings: Map<String, String>
+)
 
-fun writeTempFile(content: String): Path {
-    val path = kotlin.io.path.createTempFile(prefix = "pih")
-    FileOutputStream(path.toFile()).use {
-        it.write(content.encodeToByteArray())
-    }
+@Serializable
+data class ValidateResult(
+    val details: ValidationDetails,
+    val messages: Array<String>,
+    val errorsAndWarnings: Array<String>
+)
 
-    return path
-}
 
 @Parameters(commandNames = ["validate"], commandDescription = "Validate an invoice")
 class ValidateCommand(private val infoListener: LogEventListener, private val errorListener: LogEventListener) {
@@ -41,7 +43,6 @@ class ValidateCommand(private val infoListener: LogEventListener, private val er
     @Parameter(required = true, description = "Input XML file (invoice)")
     lateinit var inputFile: String
 
-
     fun run() {
         val cert = File(certFile)
         if (!cert.exists())
@@ -51,26 +52,30 @@ class ValidateCommand(private val infoListener: LogEventListener, private val er
         if (!invoice.exists())
             return Err("Invoice file does not exist: ${invoice.absolutePath}")
 
-        val props = ApplicationPropertyDto()
-        props.isValidateInvoice = true
-        props.invoiceFileName = inputFile
-
         val paths = ResourcesPaths.Paths()
         paths.xsdPth = Paths.get(basePath, "xsd/maindoc/UBL-Invoice-2.1.xsd").toString()
         paths.enSchematronPath = Paths.get(basePath, "schematrons/CEN-EN16931-UBL.xsl").toString()
         paths.zatcaSchematronPath =
             Paths.get(basePath, "schematrons/20210819_ZATCA_E-invoice_Validation_Rules.xsl").toString()
         paths.certificatePath = prepareCertForZatca(certFile).toString()
-        paths.pihPath = writeTempFile(previousInvoiceHash).toString()
+        paths.pihPath = writeTempFile("pih", previousInvoiceHash).toString()
         ResourcesPaths.setPaths(paths)
 
-        val service = InvoiceValidationService()
-        if (!service.generate(props))
-            Err("Failed to validate invoice", errorListener.messages.toTypedArray())
-
-        return Ok(
+        val validator = ValidationProcessorImpl()
+        val result = validator.run(invoice.readText())
+        Ok(
             "Invoice validated",
-            ValidateResult(infoListener.messages.toTypedArray(), errorListener.messages.toTypedArray())
+            ValidateResult(
+                details = ValidationDetails(
+                    isValid = result.isValid,
+                    isValidQr = result.isValidQrCode,
+                    isValidSignature = result.isValidSignature,
+                    errors = result.error ?: HashMap<String, String>(),
+                    warnings = result.warning ?: HashMap<String, String>()
+                ),
+                messages = infoListener.messages.toTypedArray(),
+                errorsAndWarnings = errorListener.messages.toTypedArray(),
+            )
         )
     }
 }
