@@ -8,6 +8,8 @@ to a section with the version name.
 
 ## Pending Changes
 
+## 2.1.0
+
 * Update version (`-v`) to expose exact version in the payload instead of just a display string. This allows clients to
   parse and check it to decide whether certain features are supported
 * Improve error message for unknown commands
