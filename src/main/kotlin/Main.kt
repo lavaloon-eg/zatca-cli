@@ -1,6 +1,7 @@
 package com.lavaloon.zatca
 
 import com.beust.jcommander.JCommander
+import com.beust.jcommander.MissingCommandException
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.ParameterException
 import com.lavaloon.zatca_cli.BuildConfig
@@ -105,6 +106,8 @@ fun main(args: Array<String>) {
         }
 
         Err("Internal error")
+    } catch (e: MissingCommandException) {
+        Err("Unknown command: ${e.unknownCommand}\nConsider updating ZATCA-CLI to the latest version")
     } catch (e: ParameterException) {
         Err(e.message!!)
     } catch (e: Exception) {

@@ -10,6 +10,7 @@ to a section with the version name.
 
 * Update version (`-v`) to expose exact version in the payload instead of just a display string. This allows clients to
   parse and check it to decide whether certain features are supported
+* Improve error message for unknown commands
 
 ## 2.0.1
 
