@@ -7,6 +7,7 @@ import com.zatca.config.ResourcesPaths
 import com.zatca.sdk.dto.ApplicationPropertyDto
 import com.zatca.sdk.service.InvoiceSigningService
 import kotlinx.serialization.Serializable
+import java.io.File
 import java.nio.file.Paths
 
 @Serializable
@@ -35,6 +36,18 @@ class SignCommand(private val errorListener: LogEventListener) {
 
 
     fun run() {
+        val cert = File(certFile)
+        if (!cert.exists())
+            return Err("Certificate file does not exist: ${cert.absolutePath}")
+
+        val invoice = File(inputFile)
+        if (!invoice.exists())
+            return Err("Invoice file does not exist: ${invoice.absolutePath}")
+
+        val privateKey = File(privateKeyPath)
+        if (!privateKey.exists())
+            return Err("Private key file does not exist: ${privateKey.absolutePath}")
+
         val props = ApplicationPropertyDto()
         props.isGenerateSignature = true
         props.isGenerateQr = true

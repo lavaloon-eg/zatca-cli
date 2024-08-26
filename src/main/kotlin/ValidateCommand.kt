@@ -6,6 +6,7 @@ import com.zatca.config.ResourcesPaths
 import com.zatca.sdk.dto.ApplicationPropertyDto
 import com.zatca.sdk.service.InvoiceValidationService
 import kotlinx.serialization.Serializable
+import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -42,6 +43,14 @@ class ValidateCommand(private val infoListener: LogEventListener, private val er
 
 
     fun run() {
+        val cert = File(certFile)
+        if (!cert.exists())
+            return Err("Certificate file does not exist: ${cert.absolutePath}")
+
+        val invoice = File(inputFile)
+        if (!invoice.exists())
+            return Err("Invoice file does not exist: ${invoice.absolutePath}")
+
         val props = ApplicationPropertyDto()
         props.isValidateInvoice = true
         props.invoiceFileName = inputFile
