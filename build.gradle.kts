@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "1.9.22"
     kotlin("plugin.serialization") version "1.9.22"
+    id("com.github.gmazzo.buildconfig") version "5.4.0"
     application
 }
 
@@ -13,6 +14,10 @@ repositories {
 
 application {
     mainClass = "com.lavaloon.zatca.MainKt"
+}
+
+buildConfig {
+    buildConfigField("APP_VERSION", provider { "${project.version}" })
 }
 
 dependencies {

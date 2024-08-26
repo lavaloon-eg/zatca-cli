@@ -3,6 +3,7 @@ package com.lavaloon.zatca
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.ParameterException
+import com.lavaloon.zatca_cli.BuildConfig
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -15,6 +16,9 @@ import kotlin.system.exitProcess
 
 @Serializable
 data class Result<TData>(val msg: String, val errors: Array<String>, val data: TData?)
+
+@Serializable
+data class VersionResult(val version: String)
 
 inline fun <reified TData> Ok(msg: String, data: TData) {
     println(Json.encodeToString(Result(msg, arrayOf(), data)))
@@ -85,7 +89,8 @@ fun main(args: Array<String>) {
         }
 
         if (options.version == true) {
-            Ok("Version: 2.0.1")
+            val version = BuildConfig.APP_VERSION
+            Ok("Version $version", VersionResult(version))
         }
 
         when (commander.parsedCommand) {
