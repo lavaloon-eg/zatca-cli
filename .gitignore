@@ -170,3 +170,6 @@ gradle-app.setting
 # End of https://www.toptal.com/developers/gitignore/api/gradle,intellij,kotlin
 
 .DS_Store
+
+# Ignore all idea files because they keep storing user-specific paths
+.idea/
