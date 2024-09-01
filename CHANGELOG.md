@@ -8,6 +8,10 @@ to a section with the version name.
 
 ## Pending Changes
 
+## 2.1.1
+
+* Update SDK schematrons to 238-R3.3.4. This should've been done with the SDK update
+
 ## 2.1.0
 
 * Update version (`-v`) to expose exact version in the payload instead of just a display string. This allows clients to
@@ -15,6 +19,7 @@ to a section with the version name.
 * Improve error message for unknown commands
 * Enhance validate command to expose more details
   * We now expose structured dictionaries of (code, error) and (code, warning) for both errors and warnings
+* Update ZATCA SDK from 238-R3.3.1 to 238-R3.3.4 
 
 ## 2.0.1
 

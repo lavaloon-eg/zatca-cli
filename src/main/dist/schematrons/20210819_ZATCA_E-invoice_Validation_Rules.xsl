@@ -365,10 +365,10 @@ The License text is included within the LICENSE.txt file in the root folder.
                      </svrl:failed-assert>
                   </xsl:if>
                </xsl:if>
-               <xsl:if test="exists(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) and (string-length(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) &gt; 700 or string-length(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) &lt; 1)">
+               <xsl:if test="exists(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) and (string-length(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) &gt; 1000 or string-length(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) &lt; 1)">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="error" id="BR-CL-KSA-14">
-                     <xsl:attribute name="test">exists(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) and (string-length(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) &gt; 700 or string-length(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) &lt; 1)</xsl:attribute>
-                     <svrl:text>[KSA-14]-Field character limits for QR field have not been met. The minimum limit is 1 and the maximum limit is 700.</svrl:text>
+                     <xsl:attribute name="test">exists(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) and (string-length(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) &gt; 1000 or string-length(cac:AdditionalDocumentReference[normalize-space(cbc:ID) = 'QR']/cac:Attachment/cbc:EmbeddedDocumentBinaryObject) &lt; 1)</xsl:attribute>
+                     <svrl:text>[KSA-14]Field character limit for QR Code field has been exceeded. The maximum character limit for this field is 1000 characters.</svrl:text>
                      <svrl:message-code>BR-CL-KSA-14</svrl:message-code>
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
@@ -446,6 +446,31 @@ The License text is included within the LICENSE.txt file in the root folder.
                   <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                </svrl:failed-assert>
             </xsl:if>
+            <xsl:variable name="prepaid-amount-exists" select="boolean(/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount)"/>
+            <xsl:variable name="prepaid-amount" select="if ($prepaid-amount-exists) then xs:decimal(/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount) else 0"/>
+            <xsl:variable name="taxable-amount-sum" select="sum(/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount)"/>
+            <xsl:variable name="tax-amount-sum" select="sum(/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount)"/>
+            <xsl:variable name="total-tax-amount" select="$taxable-amount-sum + $tax-amount-sum"/>
+            
+            <xsl:variable name="taxable-amount-exists" select="boolean(/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount)"/>
+            <xsl:variable name="tax-amount-exists" select="boolean(/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount)"/>
+            
+            <xsl:variable name="any-document-type-code-equal-386" select="boolean(/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference/cbc:DocumentTypeCode[. = '386'])"/>
+            <xsl:variable name="any-document-type-code-not-386" select="boolean(/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference/cbc:DocumentTypeCode[. != '386'])"/>
+            
+            <xsl:if test="(($prepaid-amount = 0 or not($prepaid-amount-exists))
+                          and (($taxable-amount-exists) 
+                          or ($tax-amount-exists)))
+                          or (($prepaid-amount != 0 ) and ($taxable-amount-sum > 0) 
+                          and ($tax-amount-sum > 0) and $any-document-type-code-not-386 )
+                          or (format-number($prepaid-amount, '#.00') != format-number($total-tax-amount, '#.00'))">
+                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-80">
+                     <xsl:attribute name="test">cac:LegalMonetaryTotal</xsl:attribute>
+                     <svrl:text>[BR-KSA-80] - The Pre-Paid amount (BT-113) must be equal to the sum total of the Prepayment VAT category Taxable Amount (KSA-31) and the Prepayment VAT Category Tax Amount (KSA-32).</svrl:text>
+                     <svrl:message-code>BR-KSA-80</svrl:message-code>
+                     <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
+                  </svrl:failed-assert>
+               </xsl:if>
             </schxslt:rule>
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="($schxslt:patterns-matched, 'd7e29')"/>
@@ -472,6 +497,61 @@ The License text is included within the LICENSE.txt file in the root folder.
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:LegalMonetaryTotal </xsl:attribute>
                </svrl:fired-rule>
+            </schxslt:rule>
+            <xsl:next-match>
+               <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="($schxslt:patterns-matched, 'd7e29')"/>
+            </xsl:next-match>
+         </xsl:otherwise>
+      </xsl:choose>
+   </xsl:template>
+   <xsl:template match="/ubl:Invoice[not(cac:LegalMonetaryTotal/cbc:PrepaidAmount &gt; 0)]/cac:InvoiceLine" priority="49" mode="d7e29">
+      <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
+      <xsl:choose>
+         <xsl:when test="$schxslt:patterns-matched[. = 'd7e29']">
+            <schxslt:rule pattern="d7e29">
+               <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "/ubl:Invoice /cac:InvoiceLine/cac:DocumentReference/cbc:DocumentTypeCode" shadowed by preceding rule</xsl:comment>
+               <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
+                  <xsl:attribute name="context">/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference/cbc:DocumentTypeCode</xsl:attribute>
+               </svrl:suppressed-rule>
+            </schxslt:rule>
+            <xsl:next-match>
+               <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="$schxslt:patterns-matched"/>
+            </xsl:next-match>
+         </xsl:when>
+         <xsl:otherwise>
+            <schxslt:rule pattern="d7e29">
+               <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
+                  <xsl:attribute name="context">/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference/cbc:DocumentTypeCode</xsl:attribute>
+               </svrl:fired-rule>
+               <!-- BR-KSA-73-->
+
+
+               <xsl:for-each select="./cac:TaxTotal/cac:TaxSubtotal">
+                  <xsl:choose>
+                     <xsl:when test= "  not (./cac:TaxCategory/normalize-space(cbc:ID)='S') and (./cac:TaxCategory/normalize-space(cbc:ID)='O' and not(exists(./cac:TaxCategory/cbc:Percent)) or ./cac:TaxCategory/normalize-space(cbc:ID)='E' or ./cac:TaxCategory/normalize-space(cbc:ID)='Z'  or normalize-space(./cac:TaxCategory/cbc:Percent)='')">
+                        <xsl:if test="(not(format-number(./cbc:TaxAmount,'#.00') = format-number(( round((((xs:decimal(./cbc:TaxableAmount) * (0)) div 100) * 100 + 0.01)) div 100), '#.00') )) or (not(format-number(./cbc:TaxAmount, '#.00') = format-number(round(xs:decimal(./cbc:TaxableAmount) * xs:decimal(./cac:TaxCategory/cbc:Percent) div 100, 2), '#.00')))">
+                           <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-79">
+                              <xsl:attribute name="test">/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount</xsl:attribute>
+                              <svrl:text>[BR-KSA-79]-The Prepayment VAT Category Tax Amount (KSA-32) must be Prepayment VAT category Taxable Amount( (KSA-31) x Prepayment VAT rate (KSA-34) /100).</svrl:text>
+                              <svrl:message-code>BR-KSA-79</svrl:message-code>
+                              <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
+                           </svrl:failed-assert>
+                        </xsl:if>
+                     </xsl:when>
+                     <xsl:otherwise>
+                        <xsl:if test=" normalize-space(./cac:TaxCategory/cbc:Percent)='' or not( format-number(./cbc:TaxAmount,'#.00') = (format-number((( round((((./cbc:TaxableAmount * (./cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) )) div 100) * 100 + 0.01)) div 100)-0.01), '#.00')) or format-number(./cbc:TaxAmount,'#.00') = (format-number((( round((((./cbc:TaxableAmount * (./cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) )) div 100) * 100 + 0.01)) div 100)+0.01), '#.00')) or format-number(./cbc:TaxAmount,'#.00') = (format-number((( round((((./cbc:TaxableAmount * (./cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) )) div 100) * 100 + 0.01)) div 100)), '#.00')))">
+                           <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-79">
+                              <xsl:attribute name="test">/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount</xsl:attribute>
+                              <svrl:text>[BR-KSA-79]-The Prepayment VAT Category Tax Amount (KSA-32) must be Prepayment VAT category Taxable Amount( (KSA-31) x Prepayment VAT rate (KSA-34) /100).</svrl:text>
+                              <svrl:message-code>BR-KSA-79</svrl:message-code>
+                              <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
+                           </svrl:failed-assert>
+                        </xsl:if>
+                     </xsl:otherwise>
+                  </xsl:choose>
+
+
+               </xsl:for-each>
             </schxslt:rule>
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="($schxslt:patterns-matched, 'd7e29')"/>
@@ -582,7 +662,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                <xsl:for-each select="./cac:TaxTotal/cac:TaxSubtotal">
                   <xsl:choose>
                      <xsl:when test= "  not (./cac:TaxCategory/normalize-space(cbc:ID)='S') and (./cac:TaxCategory/normalize-space(cbc:ID)='O' and not(exists(./cac:TaxCategory/cbc:Percent)) or ./cac:TaxCategory/normalize-space(cbc:ID)='E' or ./cac:TaxCategory/normalize-space(cbc:ID)='Z'  or normalize-space(./cac:TaxCategory/cbc:Percent)='')">
-                        <xsl:if test="not(format-number(./cbc:TaxAmount,'#.00') = format-number(( round((((xs:decimal(./cbc:TaxableAmount) * (0)) div 100) * 100 + 0.01)) div 100), '#.00') )">
+                        <xsl:if test="(not(format-number(./cbc:TaxAmount,'#.00') = format-number(( round((((xs:decimal(./cbc:TaxableAmount) * (0)) div 100) * 100 + 0.01)) div 100), '#.00') )) or (not(format-number(./cbc:TaxAmount, '#.00') = format-number(round(xs:decimal(./cbc:TaxableAmount) * xs:decimal(./cac:TaxCategory/cbc:Percent) div 100, 2), '#.00')))">
                            <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-79">
                               <xsl:attribute name="test">/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount</xsl:attribute>
                               <svrl:text>[BR-KSA-79]-The Prepayment VAT Category Tax Amount (KSA-32) must be Prepayment VAT category Taxable Amount( (KSA-31) x Prepayment VAT rate (KSA-34) /100).</svrl:text>
@@ -603,14 +683,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                      </xsl:otherwise>
                   </xsl:choose>
 
-                  <xsl:if test="not( format-number(xs:decimal(/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount), '#.00') = format-number(xs:decimal(sum(/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount))+ (sum(/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount)),'#.00') )">
-                     <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-80">
-                        <xsl:attribute name="test">cac:LegalMonetaryTotal </xsl:attribute>
-                        <svrl:text>[BR-KSA-80]-If Pre-Paid amount (BT-113) is provided then the Pre-Paid amount (BT-113) must equal to the sum total of the Prepayment VAT category Taxable Amount (KSA-31) and Prepayment VAT Category Tax Amount (KSA-32).</svrl:text>
-                        <svrl:message-code>BR-KSA-80</svrl:message-code>
-                        <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
-                     </svrl:failed-assert>
-                  </xsl:if>
+
                   <!-- BR-DEC-06-->
                   <xsl:if test="not(string-length(substring-after(cbc:TaxableAmount,'.')) &lt;= 2 and string-length(substring-after(cbc:TaxAmount,'.')) &lt;= 2)">
                      <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-DEC-06">
@@ -2234,10 +2307,10 @@ The License text is included within the LICENSE.txt file in the root folder.
                   </xsl:if>
                </xsl:if>
 
-               <xsl:if test="not(exists(cbc:TaxExemptionReasonCode) and ((not(contains(normalize-space(cbc:TaxExemptionReasonCode), ' ')) and normalize-space(cbc:ID) ='Z' and contains(' VATEX-SA-32 VATEX-SA-33 VATEX-SA-34-1 VATEX-SA-34-2 VATEX-SA-34-3 VATEX-SA-34-4 VATEX-SA-34-5 VATEX-SA-35 VATEX-SA-36 VATEX-SA-EDU VATEX-SA-HEA VATEX-SA-MLTRY VATEX-SA-DIPLOMAT ', concat(' ', normalize-space(cbc:TaxExemptionReasonCode), ' ')))) or ((not(contains(normalize-space(cbc:TaxExemptionReasonCode), ' ')) and normalize-space(cbc:ID) ='E' and contains(' VATEX-SA-29 VATEX-SA-29-7 VATEX-SA-30 ', concat(' ', normalize-space(cbc:TaxExemptionReasonCode), ' ')))) or  ((not(contains(normalize-space(cbc:TaxExemptionReasonCode), ' ')) and normalize-space(cbc:ID) ='O' and contains(' VATEX-SA-OOS ', concat(' ', normalize-space(cbc:TaxExemptionReasonCode), ' ')))) or normalize-space(cbc:TaxExemptionReasonCode)='' )">
+               <xsl:if test="not(exists(cbc:TaxExemptionReasonCode) and ((not(contains(normalize-space(cbc:TaxExemptionReasonCode), ' ')) and normalize-space(cbc:ID) ='Z' and contains(' VATEX-SA-32 VATEX-SA-33 VATEX-SA-34-1 VATEX-SA-34-2 VATEX-SA-34-3 VATEX-SA-34-4 VATEX-SA-34-5 VATEX-SA-35 VATEX-SA-36 VATEX-SA-EDU VATEX-SA-HEA VATEX-SA-MLTRY VATEX-SA-DIPLOMAT VATEX-SA-DUTYFREE ', concat(' ', normalize-space(cbc:TaxExemptionReasonCode), ' ')))) or ((not(contains(normalize-space(cbc:TaxExemptionReasonCode), ' ')) and normalize-space(cbc:ID) ='E' and contains(' VATEX-SA-29 VATEX-SA-29-7 VATEX-SA-30 ', concat(' ', normalize-space(cbc:TaxExemptionReasonCode), ' ')))) or  ((not(contains(normalize-space(cbc:TaxExemptionReasonCode), ' ')) and normalize-space(cbc:ID) ='O' and contains(' VATEX-SA-OOS ', concat(' ', normalize-space(cbc:TaxExemptionReasonCode), ' ')))) or normalize-space(cbc:TaxExemptionReasonCode)='' )">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-CL-04">
-                     <xsl:attribute name="test">exists(cbc:TaxExemptionReasonCode) and ((not(contains(normalize-space(cbc:TaxExemptionReasonCode), ' ')) and contains('  VATEX-SA-32 VATEX-SA-33 VATEX-SA-34-1 VATEX-SA-34-2 VATEX-SA-34-3 VATEX-SA-34-4 VATEX-SA-34-5 VATEX-SA-35 VATEX-SA-36 VATEX-SA-EDU VATEX-SA-HEA VATEX-SA-MLTRY VATEX-SA-DIPLOMAT  ', concat(' ', normalize-space(cbc:TaxExemptionReasonCode), ' '))))</xsl:attribute>
-                     <svrl:text>[BR-KSA-CL-04]-If VAT category Code (BT-118) is 'Z', or 'E' or 'O', VAT exemption (or exception) reason code (BT-121) must exist with one of the values from paragraph 11.2.4 of XML implementation standards on Tax exemption (or exception) reason code - specific to Saudi Arabia. </svrl:text>
+                     <xsl:attribute name="test">exists(cbc:TaxExemptionReasonCode) and ((not(contains(normalize-space(cbc:TaxExemptionReasonCode), ' ')) and contains('  VATEX-SA-32 VATEX-SA-33 VATEX-SA-34-1 VATEX-SA-34-2 VATEX-SA-34-3 VATEX-SA-34-4 VATEX-SA-34-5 VATEX-SA-35 VATEX-SA-36 VATEX-SA-EDU VATEX-SA-HEA VATEX-SA-MLTRY VATEX-SA-DIPLOMAT  VATEX-SA-DUTYFREE ', concat(' ', normalize-space(cbc:TaxExemptionReasonCode), ' '))))</xsl:attribute>
+                     <svrl:text>[BR-KSA-CL-04]-If VAT category Code (BT-118) is 'Z', or 'E', VAT exemption (or exception) reason code (BT-121) must exist with one of the values from paragraph 11.2.4 of XML implementation standards on Tax exemption (or exception) reason code - specific to Saudi Arabia. </svrl:text>
                      <svrl:message-code>BR-KSA-CL-04</svrl:message-code>
                      <svrl:message-category>KSA - code list (BR-KSA-CL)</svrl:message-category>
                   </svrl:failed-assert>
@@ -2496,16 +2569,16 @@ The License text is included within the LICENSE.txt file in the root folder.
          </xsl:otherwise>
       </xsl:choose>
    </xsl:template>
-   <xsl:template match="ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal[normalize-space(cac:TaxCategory/cbc:ID)!='O']/cbc:TaxableAmount | ubl:Invoice/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount | ubl:Invoice/cac:TaxTotal/cbc:TaxAmount  | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount  | ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount "
+   <xsl:template match="ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal[normalize-space(cac:TaxCategory/cbc:ID)!='O']/cbc:TaxableAmount | ubl:Invoice/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount | ubl:Invoice/cac:TaxTotal/cbc:TaxAmount  | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount  | ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:TaxExchangeRate/cbc:CalculationRate"
                  priority="9"
                  mode="d7e29">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
          <xsl:when test="$schxslt:patterns-matched[. = 'd7e395']">
             <schxslt:rule pattern="d7e395">
-               <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context ""ubl:Invoice/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount | ubl:Invoice/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:RoundingAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount" shadowed by preceding rule</xsl:comment>
+               <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context ""ubl:Invoice/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount | ubl:Invoice/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:RoundingAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:TaxExchangeRate/cbc:CalculationRate" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
-                  <xsl:attribute name="context">"ubl:Invoice/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount | ubl:Invoice/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:RoundingAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount</xsl:attribute>
+                  <xsl:attribute name="context">"ubl:Invoice/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount | ubl:Invoice/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:RoundingAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:TaxExchangeRate/cbc:CalculationRate</xsl:attribute>
                </svrl:suppressed-rule>
             </schxslt:rule>
             <xsl:next-match>
@@ -2515,7 +2588,7 @@ The License text is included within the LICENSE.txt file in the root folder.
          <xsl:otherwise>
             <schxslt:rule pattern="d7e395">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
-                  <xsl:attribute name="context">"ubl:Invoice/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount | ubl:Invoice/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:RoundingAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount</xsl:attribute>
+                  <xsl:attribute name="context">"ubl:Invoice/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount | ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount | ubl:Invoice/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:RoundingAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:Amount | ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:BaseAmount | ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount | ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount | ubl:Invoice/cac:TaxExchangeRate/cbc:CalculationRate</xsl:attribute>
                </svrl:fired-rule>
                <xsl:if test="string-length(.) &gt; 0 and not((.) &gt;= 0)">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="error" id="BR-KSA-F-04">
@@ -2559,10 +2632,10 @@ The License text is included within the LICENSE.txt file in the root folder.
                      <svrl:message-category>KSA - EN16931 (BR-KSA-EN16931)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>
-               <xsl:if test="not(count(./cac:TaxTotal) &gt;= 1 and count(./cac:TaxTotal/cac:TaxSubtotal) &gt;= 1)">
-                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="error" id="BR-KSA-EN16931-08">
-                     <xsl:attribute name="test">count(./cac:TaxTotal) &gt;= 1 and count(./cac:TaxTotal/cac:TaxSubtotal) &gt;= 1</xsl:attribute>
-                     <svrl:text>[BR-KSA-EN16931-08]-Only one tax total (BG-22) with tax subtotals must be provided.</svrl:text>
+               <xsl:if test="not(count(./cac:TaxTotal[cac:TaxSubtotal]) = 1)">
+                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-EN16931-08">
+                     <xsl:attribute name="test">count(./cac:TaxTotal[cac:TaxSubtotal]) = 1</xsl:attribute>
+                     <svrl:text>[BR-KSA-EN16931-08]-Only one tax total (BG-22) with tax subtotals (BG-23) must be provided.</svrl:text>
                      <svrl:message-code>BR-KSA-EN16931-08</svrl:message-code>
                      <svrl:message-category>KSA - EN16931 (BR-KSA-EN16931)</svrl:message-category>
                   </svrl:failed-assert>
@@ -2601,10 +2674,10 @@ The License text is included within the LICENSE.txt file in the root folder.
                      <svrl:message-category>KSA - EN16931 (BR-KSA-EN16931)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>
-               <xsl:if test="not(count(../cac:TaxTotal) &gt;= 2 and count(../cac:TaxTotal) &lt;= 2 and count(../cac:TaxTotal/cac:TaxSubtotal) &gt;= 1)">
+               <xsl:if test="not(count(../cac:TaxTotal[not(cac:TaxSubtotal)]) = 1)">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-EN16931-09">
-                     <xsl:attribute name="test">count(../cac:TaxTotal) &gt;= 2 and count(../cac:TaxTotal) &lt;= 2 and count(../cac:TaxTotal/cac:TaxSubtotal) &gt;= 1</xsl:attribute>
-                     <svrl:text>[BR-KSA-EN16931-09]-Only one tax total (BG-22) without tax subtotals must be provided when tax currency code is provided.</svrl:text>
+                     <xsl:attribute name="test">count(../cac:TaxTotal[not(cac:TaxSubtotal)]) = 1</xsl:attribute>
+                     <svrl:text>[BR-KSA-EN16931-09]-Only one tax total (BG-22) without tax subtotals (BG-23) must be provided when tax currency code is provided.</svrl:text>
                      <svrl:message-code>BR-KSA-EN16931-09</svrl:message-code>
                      <svrl:message-category>KSA - EN16931 (BR-KSA-EN16931)</svrl:message-category>
                   </svrl:failed-assert>
@@ -2894,16 +2967,15 @@ The License text is included within the LICENSE.txt file in the root folder.
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>
-               <xsl:if test="string-length(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail) &gt; 0 and not(exists(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail) and matches(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail,'^[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@(?:[0-9a-zA-Z]+\.)+[a-zA-Z]{2,3}$'))">
+               <xsl:if test="string-length(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail) &gt; 0 and not(exists(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail) and matches(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail,
+               '^(?:[a-zA-Z0-9](?:[_a-zA-Z0-9.-]*[a-zA-Z0-9_])?@(?:[a-zA-Z0-9]([-.\w]*[a-zA-Z0-9])+\.)+[a-zA-Z]{2,3}(?:;|$))+$'))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-86">
                      <xsl:attribute name="test">matches(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail, '^[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@(?:[0-9a-zA-Z]+\.)+[a-zA-Z]{2,3}$')</xsl:attribute>
-                     <svrl:text>[BR-KSA-86]- Buyer's Contact
-                        Email Address (BT-58) shall follow the following format  **
-                        XXX@YYY.ZZ
-                        where :
+                     <svrl:text>[BR-KSA-86]- Buyer's Contact Email Address (BT-58) shall follow the following format ** XXX@YYY.ZZ where:
                         The [XXX] should consist of alphanumeric characters (a-z, A-Z, 0-9), dots ('.'), underscores ('_'), or hyphens ('-'). It must start and end with an alphanumeric character.
-                        The [YYY] should consist of alphanumeric characters  (a-z, A-Z, 0-9) and dots ('.'). It must start and end with an alphanumeric character.
-                        The [zz]  should be a valid extension with maximum 3 and minimum 2 alphabets (a-z, A-Z). If exist.</svrl:text>
+                        The [YYY] should consist of alphanumeric characters (a-z, A-Z, 0-9), hyphens ('-'), and dots ('.'). It must start and end with an alphanumeric character.
+                        The [ZZ] should be a valid extension with a maximum 3 and a minimum 2 alphabets (a-z, A-Z), If exist.
+                        Multiple emails can be provided using semicolon ';' separator.</svrl:text>
                      <svrl:message-code>BR-KSA-86</svrl:message-code>
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
@@ -2938,6 +3010,76 @@ The License text is included within the LICENSE.txt file in the root folder.
       </xsl:choose>
    </xsl:template>
    <!--    end  BR-KSA-85 && BR-KSA-86 &&BR-KSA-F-06-C37&& BR-KSA-F-06-C38 -->
+
+   <xsl:template match="/ubl:Invoice/cac:TaxExchangeRate | cbc:DocumentCurrencyCode | cbc:TaxCurrencyCode" priority="22" mode="d7e29">
+      <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
+      <xsl:choose>
+         <xsl:when test="$schxslt:patterns-matched[. = 'd7e29']">
+            <schxslt:rule pattern="d7e29">
+               <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "/ubl:Invoice/cac:TaxExchangeRate" shadowed by preceding rule
+               </xsl:comment>
+               <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
+                  <xsl:attribute name="context">/ubl:Invoice/cac:TaxExchangeRate</xsl:attribute>
+               </svrl:suppressed-rule>
+            </schxslt:rule>
+            <xsl:next-match>
+               <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="$schxslt:patterns-matched"/>
+            </xsl:next-match>
+         </xsl:when>
+         <xsl:otherwise>
+            <schxslt:rule pattern="d7e29">
+               <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
+                  <xsl:attribute name="context">/ubl:Invoice/cac:TaxExchangeRate</xsl:attribute>
+               </svrl:fired-rule>
+               <xsl:if test="exists(/ubl:Invoice/cac:TaxExchangeRate) and not(exists(/ubl:Invoice/cac:TaxExchangeRate/cbc:SourceCurrencyCode) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:SourceCurrencyCode) != ''  and exists(/ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode) != '' and exists(/ubl:Invoice/cac:TaxExchangeRate/cbc:CalculationRate) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:CalculationRate) != '')">
+                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}"
+                                      flag="warning" id="BR-KSA-87">
+                     <xsl:attribute name="test">exists(/ubl:Invoice/cac:TaxExchangeRate/cbc:SourceCurrencyCode) and exists(/ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode)  and exists(/ubl:Invoice/cac:TaxExchangeRate/cbc:CalculationRate)
+                     </xsl:attribute>
+                     <svrl:text>[BR-KSA-87] If the tax exchange rate (KSA-36) exists, then Source Currency Code
+                        (KSA-37), Target Currency Code (KSA-38) and Calculation Rate (KSA-39) shall be provided
+                     </svrl:text>
+                     <svrl:message-code>BR-KSA-87</svrl:message-code>
+                     <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
+                  </svrl:failed-assert>
+               </xsl:if>
+               <xsl:if test="exists(/ubl:Invoice/cac:TaxExchangeRate/cbc:SourceCurrencyCode) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:SourceCurrencyCode) != '' and not(matches(normalize-space(//cbc:DocumentCurrencyCode), /ubl:Invoice/cac:TaxExchangeRate/cbc:SourceCurrencyCode) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:SourceCurrencyCode !='')  )">
+                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}"
+                                      flag="error" id="BR-KSA-88">
+                     <xsl:attribute name="test">matches(normalize-space(//cbc:DocumentCurrencyCode), /ubl:Invoice/cac:TaxExchangeRate/cbc:SourceCurrencyCode) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:SourceCurrencyCode !='')</xsl:attribute>
+                     <svrl:text>[BR-KSA-88] If exist, Source Currency Code (KSA-37) must be the same as Invoice currency code (BT-5)</svrl:text>
+                     <svrl:message-code>BR-KSA-88</svrl:message-code>
+                     <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
+                  </svrl:failed-assert>
+               </xsl:if>
+               <xsl:if test="exists(/ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode) != '' and not(matches(normalize-space(//cbc:TaxCurrencyCode), /ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode !='')  )">
+                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}"
+                                      flag="error" id="BR-KSA-89">
+                     <xsl:attribute name="test">matches(normalize-space(//cbc:DocumentCurrencyCode), /ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode !='')</xsl:attribute>
+                     <svrl:text>[BR-KSA-89] If exists, Target Currency Code (KSA-38) must be the same as the Tax currency code (BT-6)</svrl:text>
+                     <svrl:message-code>BR-KSA-89</svrl:message-code>
+                     <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
+                  </svrl:failed-assert>
+               </xsl:if>
+               <xsl:if test="exists(/ubl:Invoice/cac:TaxExchangeRate/cbc:CalculationRate) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:CalculationRate) != '' and not(string-length(normalize-space(/ubl:Invoice/cac:TaxExchangeRate/cbc:CalculationRate)) &lt; 15)">
+                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}"
+                                      flag="error" id="BR-KSA-90">
+                     <xsl:attribute name="test">matches(normalize-space(//cbc:DocumentCurrencyCode), /ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode) and (/ubl:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode !='')</xsl:attribute>
+                     <svrl:text>[BR-KSA-90] If exists, the allowed maximum number of digits for the Tax Exchange Rate (KSA-39) is 14.</svrl:text>
+                     <svrl:message-code>BR-KSA-90</svrl:message-code>
+                     <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
+                  </svrl:failed-assert>
+               </xsl:if>
+            </schxslt:rule>
+            <xsl:next-match>
+               <xsl:with-param name="schxslt:patterns-matched" as="xs:string*"
+                               select="($schxslt:patterns-matched, 'd7e29')"/>
+            </xsl:next-match>
+         </xsl:otherwise>
+      </xsl:choose>
+   </xsl:template>
+   <!--    end  BR-KSA-87 && BR-KSA-88 && BR-KSA-90 && BR-KSA-90 -->
+
    <xsl:function name="schxslt:location" as="xs:string">
       <xsl:param name="node" as="node()"/>
       <xsl:variable name="segments" as="xs:string*">
