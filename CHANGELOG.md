@@ -8,6 +8,8 @@ to a section with the version name.
 
 ## Pending Changes
 
+* Update ZATCA SDK from 238-R3.3.4 to 238-R3.3.5
+
 ## 2.1.1
 
 * Update SDK schematrons to 238-R3.3.4. This should've been done with the SDK update
