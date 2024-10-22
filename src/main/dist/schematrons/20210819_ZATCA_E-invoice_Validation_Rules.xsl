@@ -461,7 +461,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                      <xsl:attribute name="test">exists(cbc:IssueTime) and (cbc:IssueTime) != '' and (matches(cbc:IssueTime,
                         '^([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$') or matches(cbc:IssueTime,
                         '^([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])Z$'))</xsl:attribute>
-                     <svrl:text>[BR-KSA-70]-The invoice must contain Invoice Issue Time (KSA-25). This value should be in the format: hh:mm:ss for time expressed in local time (eg 19:20:30) or hh:mm:ssZ for time expressed in UTC (eg 19:20:30Z).</svrl:text>
+                     <svrl:text>[BR-KSA-70]-The invoice must contain Invoice Issue Time (KSA-25). This value should be in the format: hh:mm:ss for time expressed in local time (eg 19:20:30) or hh:mm:ssZ for time expressed in UTC (eg 19:20:30Z)."The invoice must contain Invoice Issue Time (KSA-25). This value should be in the format: hh:mm:ss for time expressed in local time (eg 19:20:30) or hh:mm:ssZ for time expressed in UTC (eg 19:20:30Z).</svrl:text>
                      <svrl:message-code>BR-KSA-70</svrl:message-code>
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
@@ -808,7 +808,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                <xsl:if test="not(exists(//cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID) and (//cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID/@schemeID) = 'NAT')">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="error" id="BR-KSA-49">
                      <xsl:attribute name="test">exists(//cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID) and (//cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID/@schemeID) = 'NAT'</xsl:attribute>
-                     <svrl:text>[BR-KSA-49]-If the tax exemption reason code (BT-121) is equal to VATEX-SA-EDU or VATEX-SA-HEA, then the other buyer ID (BT-46) is mandatory  and must be national ID (BT-46-1 = NAT).</svrl:text>
+                     <svrl:text>[BR-KSA-49]-If the tax exemption reason code (BT-121) is equal to VATEX-SA-EDU or VATEX-SA-HEA, then the other buyer ID (BT-46) is mandatory and must be national ID (BT-46-1 = NAT).</svrl:text>
                      <svrl:message-code>BR-KSA-49</svrl:message-code>
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
@@ -1080,12 +1080,15 @@ The License text is included within the LICENSE.txt file in the root folder.
                <xsl:if test="not(exists(cbc:EmbeddedDocumentBinaryObject) and (cbc:EmbeddedDocumentBinaryObject) != '' and (cbc:EmbeddedDocumentBinaryObject[normalize-space(@mimeCode) = 'text/plain']))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-26">
                      <xsl:attribute name="test">exists(cbc:EmbeddedDocumentBinaryObject) and (cbc:EmbeddedDocumentBinaryObject) != '' and (cbc:EmbeddedDocumentBinaryObject[normalize-space(@mimeCode) = 'text/plain'])</xsl:attribute>
-                     <svrl:text>[BR-KSA-26]-If the invoiceinvoice contains the previous invoice hash (KSA-13), this hashmust be base64 encoded SHA256.
-                        This hash will be computed from all the elements of the previous invoice:
-                        - UBL invoice
-                        - hash of the previous invoice (of the previous invoice)
-                        - QR code
-                        - cryptographic stamp</svrl:text>
+                     <svrl:text>[BR-KSA-26]-If the invoice contains the previous invoice hash (KSA-13), this hash must be base64 encoded SHA256.
+                        The hash shall be computed using the following method as described in the ds:transforms block in the XML Invoice Specifications:
+                        1. Remove the &lt;Invoice&gt;&lt;ext:UBLExtensions/&gt; block
+                        2. Remove the &lt;Invoice&gt;&lt;cac:AdditionalDocumentReference/&gt; block where &lt;cbc:ID/&gt; = QR
+                        3. Remove the &lt;Invoice&gt;&lt;cac:Signature/&gt; block
+                        4. Canonicalize the Invoice using the C14N11 standard
+                        5. Hash the resulting string using SHA256 to a binary object
+                        6. Base64 encode the binary object to generate the digest value
+                        For the first invoice, the previous invoice hash is "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==", the equivalent for base64 encoded SHA256 of "0" (zero) character.</svrl:text>
                      <svrl:message-code>BR-KSA-26</svrl:message-code>
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
@@ -1849,10 +1852,11 @@ The License text is included within the LICENSE.txt file in the root folder.
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="error" id="BR-KSA-31">
                      <xsl:attribute name="test">                 (substring(./@name, 3,1) = '1' or substring(./@name, 3,1) = '0') and                  (substring(./@name, 4,1) = '1' or substring(./@name, 4,1) = '0') and                 (substring(./@name, 5,1) = '0') and                 (substring(./@name, 6,1) = '1' or substring(./@name, 6,1) = '0') and                  (substring(./@name, 7,1) = '0')</xsl:attribute>
                      <svrl:text>
-                        [BR-KSA-31]-For simplified tax invoices and associated credit notes and debit notes  (KSA-2, position 1 and 2 = 02),  only the following are accepted:
-                        third party (KSA-2, position 3 = 1),
-                        nominal supply (KSA-2, position 4 = 1) and
-                        summary transactions (KSA-2,, position 6 = 1).</svrl:text>
+                        [BR-KSA-31]-For simplified tax invoices and associated credit notes and debit notes  (KSA-2, position 1 and 2 = 02),only the following transaction types can be "true":
+                        - third party (KSA-2, position 3 = 1),
+                        - nominal supply (KSA-2, position 4 = 1) and
+                        - summary transactions (KSA-2,position 6 = 1).
+                        Other transaction types (self-billing and export) are not allowed to be "true" for simplified tax invoices and associated credit notes and debit notes.</svrl:text>
                      <svrl:message-code>BR-KSA-31</svrl:message-code>
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
@@ -1870,7 +1874,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                      <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}"
                                          flag="warning" id="BR-KSA-71">
                         <xsl:attribute name="test">not(exists(//cac:AccountingCustomerParty/cac:Party//cac:PartyLegalEntity/cbc:RegistrationName) and //cac:AccountingCustomerParty/cac:Party//cac:PartyLegalEntity/cbc:RegistrationName !='')</xsl:attribute>
-                        <svrl:text>If the Invoice is a simplified invoice type and is a summary invoice (KSA-2, position 1 and 2 = 02, position 6 = 1), then the buyer name must be present.</svrl:text>
+                        <svrl:text>If the Invoice is a simplified invoice type and is a summary invoice (KSA-2, position 1 and 2 = 02, position 6 = 1),then the buyer name must be present.</svrl:text>
                         <svrl:message-code>BR-KSA-71</svrl:message-code>
                         <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                      </svrl:failed-assert>
@@ -2496,7 +2500,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                            <xsl:attribute name="test">exists(cbc:TaxExemptionReason) </xsl:attribute>
                            <svrl:text>[BR-KSA-96]-An Invoice line (BG-25) with the Prepayment VAT category code (KSA-33) 'Exempt from VAT' or 'Zero rated' or 'Not subject to VAT' shall have a Prepayment VAT exemption(or exception) reason text (KSA-42) with one of the values from paragraph 11.2.4 of XML implementation standards on Tax exemption (or exception) reason text - specific to Saudi Arabia. </svrl:text>
                            <svrl:message-code>BR-KSA-96</svrl:message-code>
-                           <svrl:message-category>KSA - code list (BR-KSA-CL)</svrl:message-category>
+                           <svrl:message-category>KSA - code list (BR-KSA)</svrl:message-category>
                         </svrl:failed-assert>
                      </xsl:if>
                   </xsl:if>
@@ -2607,7 +2611,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                <xsl:if test="not(((string(.) castable as xs:time)))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-F-05">
                      <xsl:attribute name="test">(string-length(.) = 8 and (string(.) castable as xs:time))</xsl:attribute>
-                     <svrl:text>[BR-KSA-F-05]-Prepayment Issue Time (KSA-29) must be in the format: hh:mm:ss for time expressed in AST or hh:mm:ssZ for time expressed in UTC.(eg 19:20:30)</svrl:text>
+                     <svrl:text>[BR-KSA-F-05]-Prepayment Issue Time (KSA-29) must be in the format: hh:mm:ss for time expressed in local time or hh:mm:ssZ for time expressed in UTC.(eg 19:20:30)</svrl:text>
                      <svrl:message-code>BR-KSA-F-05</svrl:message-code>
                      <svrl:message-category>KSA - formats (BR-KSA-F)</svrl:message-category>
                   </svrl:failed-assert>
@@ -2677,7 +2681,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                <xsl:if test="string-length(.) &gt; 0 and not((.) &gt;= 0)">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="error" id="BR-KSA-F-04">
                      <xsl:attribute name="test">number(.) &gt;= 0</xsl:attribute>
-                     <svrl:text>[BR-KSA-F-04]-All the document amounts and quantities must be positive.</svrl:text>
+                     <svrl:text>[BR-KSA-F-04]-All the document amounts and quantities must be positive, unless specified otherwise.</svrl:text>
                      <svrl:message-code>BR-KSA-F-04</svrl:message-code>
                      <svrl:message-category>KSA - formats (BR-KSA-F)</svrl:message-category>
                   </svrl:failed-assert>
@@ -2719,7 +2723,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                <xsl:if test="not(count(./cac:TaxTotal[cac:TaxSubtotal]) = 1)">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-EN16931-08">
                      <xsl:attribute name="test">count(./cac:TaxTotal[cac:TaxSubtotal]) = 1</xsl:attribute>
-                     <svrl:text>[BR-KSA-EN16931-08]-Only one tax total (BG-22) with tax subtotals (BG-23) must be provided.</svrl:text>
+                     <svrl:text>[BR-KSA-EN16931-08]-Only one tax total (BG-22) with tax subtotals must be provided.Refer to Calculation of VAT.</svrl:text>
                      <svrl:message-code>BR-KSA-EN16931-08</svrl:message-code>
                      <svrl:message-category>KSA - EN16931 (BR-KSA-EN16931)</svrl:message-category>
                   </svrl:failed-assert>
@@ -2753,7 +2757,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                <xsl:if test="not((normalize-space(upper-case(.))) = 'SAR')">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="error" id="BR-KSA-EN16931-02">
                      <xsl:attribute name="test">(normalize-space(upper-case(.))) = 'SAR'</xsl:attribute>
-                     <svrl:text>[BR-KSA-EN16931-02]-VAT accounting currency code (BT-6) must be SAR.</svrl:text>
+                     <svrl:text>[BR-KSA-EN16931-02]-VAT accounting currency code (BT-6) must be "SAR".</svrl:text>
                      <svrl:message-code>BR-KSA-EN16931-02</svrl:message-code>
                      <svrl:message-category>KSA - EN16931 (BR-KSA-EN16931)</svrl:message-category>
                   </svrl:failed-assert>
@@ -2761,7 +2765,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                <xsl:if test="not(count(../cac:TaxTotal[not(cac:TaxSubtotal)]) = 1)">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-EN16931-09">
                      <xsl:attribute name="test">count(../cac:TaxTotal[not(cac:TaxSubtotal)]) = 1</xsl:attribute>
-                     <svrl:text>[BR-KSA-EN16931-09]-Only one tax total (BG-22) without tax subtotals (BG-23) must be provided when tax currency code is provided.</svrl:text>
+                     <svrl:text>[BR-KSA-EN16931-09]-Only one tax total (BG-22) without tax subtotals (BG-23) must be provided when tax currency code is provided .</svrl:text>
                      <svrl:message-code>BR-KSA-EN16931-09</svrl:message-code>
                      <svrl:message-category>KSA - EN16931 (BR-KSA-EN16931)</svrl:message-category>
                   </svrl:failed-assert>
@@ -3010,7 +3014,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                <xsl:if test="not(xs:decimal(../../cbc:PriceAmount) = xs:decimal(.) - xs:decimal(../cbc:Amount))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="error" id="BR-KSA-EN16931-07">
                      <xsl:attribute name="test">xs:decimal(../../cbc:PriceAmount) = xs:decimal(.) - xs:decimal(../cbc:Amount)</xsl:attribute>
-                     <svrl:text>[BR-KSA-EN16931-07]-Item net price (BT-146) must equal (Gross price (BT-148) - Allowance amount (BT-147)) when gross price is provided.</svrl:text>
+                     <svrl:text>[BR-KSA-EN16931-07]-Item net price (BT-146) must equal (Item Gross price (BT-148) - Allowance amount (BT-147)) when gross price is provided.</svrl:text>
                      <svrl:message-code>BR-KSA-EN16931-07</svrl:message-code>
                      <svrl:message-category>KSA - EN16931 (BR-KSA-EN16931)</svrl:message-category>
                   </svrl:failed-assert>
