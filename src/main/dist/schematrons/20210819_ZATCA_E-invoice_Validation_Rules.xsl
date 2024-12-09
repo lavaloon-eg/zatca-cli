@@ -2728,6 +2728,18 @@ The License text is included within the LICENSE.txt file in the root folder.
                      <svrl:message-category>KSA - EN16931 (BR-KSA-EN16931)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>
+               <xsl:if test="exists(cbc:DocumentCurrencyCode) and cbc:DocumentCurrencyCode != '' and cbc:DocumentCurrencyCode != 'SAR'">
+                  <xsl:if test="(./cac:TaxTotal[cac:TaxSubtotal]/cbc:TaxAmount > 0) and (./cac:TaxTotal[not(cac:TaxSubtotal)]/cbc:TaxAmount > 0) and
+                 (round(./cac:TaxTotal[cac:TaxSubtotal]/cbc:TaxAmount * 100) div 100 = round(./cac:TaxTotal[not(cac:TaxSubtotal)]/cbc:TaxAmount * 100) div 100)">
+                     <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-97">
+                        <xsl:attribute name="test">(./cac:TaxTotal[cac:TaxSubtotal]/cbc:TaxAmount > 0) and (./cac:TaxTotal[not(cac:TaxSubtotal)]/cbc:TaxAmount > 0) and
+                           (round(./cac:TaxTotal[cac:TaxSubtotal]/cbc:TaxAmount * 100) div 100 = round(./cac:TaxTotal[not(cac:TaxSubtotal)]/cbc:TaxAmount * 100) div 100)</xsl:attribute>
+                        <svrl:text>[BR-KSA-97]-If the Document Currency Code (BT-5) is different from "SAR", then the value in "Invoice total VAT amount (BT-110)" cannot be the same as the value in "Invoice total VAT amount in accounting currency (BT-111)".</svrl:text>
+                        <svrl:message-code>BR-KSA-97</svrl:message-code>
+                        <svrl:message-category>KSA - code list (BR-KSA)</svrl:message-category>
+                     </svrl:failed-assert>
+                  </xsl:if>
+               </xsl:if>
             </schxslt:rule>
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="($schxslt:patterns-matched, 'd7e416')"/>

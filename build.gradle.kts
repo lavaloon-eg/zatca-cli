@@ -23,7 +23,7 @@ buildConfig {
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("org.jcommander:jcommander:1.83")
-    implementation(files("lib/zatca-einvoicing-sdk-238-R3.3.6.jar"))
+    implementation(files("lib/zatca-einvoicing-sdk-238-R3.3.9.jar"))
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 }
 

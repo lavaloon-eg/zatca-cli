@@ -1255,20 +1255,20 @@ The copyright of CEN/EN 16931:2017 is owned by CEN and its members - the Europea
                   </xsl:otherwise>
                </xsl:choose>-->
 
-               <xsl:variable name="taxAmount" select="xs:float(./cbc:TaxAmount)"/>
-               <xsl:variable name="taxableAmount" select="./cbc:TaxableAmount"/>
-               <xsl:variable name="vatCategoryRate" select="xs:float(./cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:Percent)"/>
+            <xsl:variable name="taxAmount" select="xs:double(./cbc:TaxAmount)"/>
+               <xsl:variable name="taxableAmount" select="xs:double(./cbc:TaxableAmount)"/>
+               <xsl:variable name="vatCategoryRate" select="xs:double(./cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:Percent)"/>
                <xsl:variable name="toleranceLimit" select="count(//cac:InvoiceLine) * 0.01" as="xs:float"/>
-               <xsl:variable name="shouldBe" select="round(xs:float(format-number($taxableAmount * ($vatCategoryRate div 100), '0.00')) * 100) div 100"/>
+               <xsl:variable name="shouldBe" select="round(xs:double(format-number($taxableAmount * ($vatCategoryRate div 100), '0.00')) * 100) div 100"/>
                <xsl:variable name="upperLimit" select="round(($shouldBe + $toleranceLimit) * 100) div 100"/>
                <xsl:variable name="lowerLimit" select="round(($shouldBe - $toleranceLimit) * 100) div 100"/>
-               <xsl:variable name="checkTwo" select="($taxAmount &lt;= $upperLimit and $taxAmount &gt;= $lowerLimit) or ($taxAmount = $shouldBe)" as="xs:boolean"/>
-               <xsl:if test="not($checkTwo)">
+               <xsl:variable name="checkTwo" select="($taxAmount &lt;= $upperLimit and $taxAmount &gt;= $lowerLimit) or ($taxAmount = $shouldBe)" as="xs:boolean"/>            
+               <xsl:if test="not($checkTwo)">  
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-CO-17">
-                     <xsl:attribute name="test">(round(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent)) = 0 and (round(xs:decimal(cbc:TaxAmount)) = 0)) or (round(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent)) != 0 and ((abs(xs:decimal(cbc:TaxAmount)) - 1 &lt; round(abs(xs:decimal(cbc:TaxableAmount)) * (cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) div 100) * 10 * 10) div 100 ) and (abs(xs:decimal(cbc:TaxAmount)) + 1 &gt; round(abs(xs:decimal(cbc:TaxableAmount)) * (cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) div 100) * 10 * 10) div 100 )))  or (not(exists(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent))) and (round(xs:decimal(cbc:TaxAmount)) = 0))</xsl:attribute>
-                     <svrl:text>[BR-CO-17]-VAT category tax amount (BT-117) = VAT category taxable amount (BT-116) x (VAT category rate (BT-119) / 100), rounded to two decimals.</svrl:text>
-                     <svrl:message-code>BR-CO-17</svrl:message-code>
-                     <svrl:message-category>Business rules - conditions (BR-CO)</svrl:message-category>
+                  <xsl:attribute name="test">(round(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent)) = 0 and (round(xs:decimal(cbc:TaxAmount)) = 0)) or (round(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent)) != 0 and ((abs(xs:decimal(cbc:TaxAmount)) - 1 &lt; round(abs(xs:decimal(cbc:TaxableAmount)) * (cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) div 100) * 10 * 10) div 100 ) and (abs(xs:decimal(cbc:TaxAmount)) + 1 &gt; round(abs(xs:decimal(cbc:TaxableAmount)) * (cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) div 100) * 10 * 10) div 100 )))  or (not(exists(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent))) and (round(xs:decimal(cbc:TaxAmount)) = 0))</xsl:attribute>
+                  <svrl:text>[BR-CO-17]-VAT category tax amount (BT-117) = VAT category taxable amount (BT-116) x (VAT category rate (BT-119) / 100), rounded to two decimals.</svrl:text>
+                  <svrl:message-code>BR-CO-17</svrl:message-code>
+                  <svrl:message-category>Business rules - conditions (BR-CO)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>
 
@@ -1494,11 +1494,11 @@ The copyright of CEN/EN 16931:2017 is owned by CEN and its members - the Europea
                      <svrl:message-category>Business rules - VAT standard and reduced rate (BR-S)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>-->
-               <xsl:variable name="taxAmount" select="xs:float(../cbc:TaxAmount)"/>
-               <xsl:variable name="taxableAmount" select="../cbc:TaxableAmount"/>
-               <xsl:variable name="vatCategoryRate" select="xs:float(../cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:Percent)"/>
+              <xsl:variable name="taxAmount" select="xs:double(../cbc:TaxAmount)"/>
+               <xsl:variable name="taxableAmount" select="xs:double(../cbc:TaxableAmount)"/>
+               <xsl:variable name="vatCategoryRate" select="xs:double(../cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:Percent)"/>
                <xsl:variable name="toleranceLimit" select="count(//cac:InvoiceLine) * 0.01" as="xs:float"/>
-               <xsl:variable name="shouldBe" select="round(xs:float(format-number($taxableAmount * ($vatCategoryRate div 100), '0.00')) * 100) div 100"/>
+               <xsl:variable name="shouldBe" select="round(xs:double(format-number($taxableAmount * ($vatCategoryRate div 100), '0.00')) * 100) div 100"/>
                <xsl:variable name="upperLimit" select="round(($shouldBe + $toleranceLimit) * 100) div 100"/>
                <xsl:variable name="lowerLimit" select="round(($shouldBe - $toleranceLimit) * 100) div 100"/>
                <xsl:variable name="checkOne" select="normalize-space(./cbc:Percent)=''" as="xs:boolean" />
