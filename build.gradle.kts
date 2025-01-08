@@ -25,6 +25,8 @@ dependencies {
     implementation("org.jcommander:jcommander:1.83")
     implementation(files("lib/zatca-einvoicing-sdk-238-R3.3.9.jar"))
     testImplementation("org.jetbrains.kotlin:kotlin-test")
+    implementation("org.apache.pdfbox:pdfbox:2.0.29")
+    implementation("org.apache.pdfbox:pdfbox-tools:2.0.29")
 }
 
 tasks.test {
