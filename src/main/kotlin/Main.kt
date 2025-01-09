@@ -84,6 +84,7 @@ fun main(args: Array<String>) {
         val csr = CsrCommand(errorListener)
         val sign = SignCommand(errorListener)
         val validate = ValidateCommand(infoListener, errorListener)
+        val convertPdf = ConvertPdfCommand()
 
         val commander = JCommander.newBuilder()
             .programName("zatca-cli")
@@ -91,6 +92,7 @@ fun main(args: Array<String>) {
             .addCommand(csr)
             .addCommand(sign)
             .addCommand(validate)
+            .addCommand(convertPdf)
             .build()
 
         commander.parse(*args)
@@ -109,6 +111,7 @@ fun main(args: Array<String>) {
             "csr" -> csr.run()
             "sign" -> sign.run()
             "validate" -> validate.run()
+            "convert-pdf" -> convertPdf.run()
             else -> {
                 val sb = StringBuilder()
                 commander.usage(sb)

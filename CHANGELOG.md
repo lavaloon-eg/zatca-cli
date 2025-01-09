@@ -8,6 +8,10 @@ to a section with the version name.
 
 ## Pending Changes
 
+* Add preliminary PDF/A-3B support using Spire.PDF free
+  * Spire.PDF free is limited to 10-page PDFs, which should work fine for invoices
+  * We'll look into open-source alternatives for future-proofing
+
 ## 2.4.0
 
 * Update ZATCA SDK from 238-R3.3.6 to 238-R3.3.9
