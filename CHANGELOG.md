@@ -8,6 +8,8 @@ to a section with the version name.
 
 ## Pending Changes
 
+## 2.5.0
+
 * Add preliminary PDF/A-3B support using Spire.PDF free
   * Spire.PDF free is limited to 10-page PDFs, which should work fine for invoices
   * We'll look into open-source alternatives for future-proofing
