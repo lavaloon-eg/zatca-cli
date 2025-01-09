@@ -84,7 +84,7 @@ fun main(args: Array<String>) {
         val csr = CsrCommand(errorListener)
         val sign = SignCommand(errorListener)
         val validate = ValidateCommand(infoListener, errorListener)
-        val convertPdf = ConvertPdfCommand(errorListener)
+        val convertPdf = ConvertPdfCommand()
 
         val commander = JCommander.newBuilder()
             .programName("zatca-cli")

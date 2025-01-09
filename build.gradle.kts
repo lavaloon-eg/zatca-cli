@@ -10,10 +10,13 @@ version = "2.4.0"
 
 repositories {
     mavenCentral()
+    maven("https://repo.e-iceblue.cn/repository/maven-public/")
 }
 
 application {
     mainClass = "com.lavaloon.zatca.MainKt"
+    // The ConvertPdfCommand generates invalid dates on Arabic locales if the JVM language isn't English
+    applicationDefaultJvmArgs = listOf("-Duser.language=en")
 }
 
 buildConfig {
@@ -27,6 +30,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     implementation("org.apache.pdfbox:pdfbox:2.0.29")
     implementation("org.apache.pdfbox:pdfbox-tools:2.0.29")
+    implementation("e-iceblue:spire.pdf.free:9.13.0")
 }
 
 tasks.test {
