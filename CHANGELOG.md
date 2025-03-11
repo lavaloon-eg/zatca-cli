@@ -11,8 +11,10 @@ to a section with the version name.
 * Add preliminary PDF/A-3B support using Spire.PDF free
   * Spire.PDF free is limited to 10-page PDFs, which should work fine for invoices
   * We'll look into open-source alternatives for future-proofing
-* Fix Signing Invoice `SigningTime` to be explicitly set to `Asia/Riyadh` timezone.
-  * The singing command previously created the SingingTime timestamp using the system’s local time, which defaulted to UTC. This caused incorrect timestamps so timezone is explicitly set to `Asia/Riyadh`. 
+
+* Fix Invoice validation failure due to difference between `IssueDate` & `SigningTime`
+  * Since the CLI uses the local time with `UTC` timezone this caused a delay in `SigningTime` against the ERP `IssueDate` i.e `IssueDate` is in the future, so timezone is now explicitly set to `Asia/Riyadh` timezone to overcome difference in between `SigningTime` and `IssueDate`.
+  * refer Business Rule: `BR-KSA-04`
 
 ## 2.4.0
 
