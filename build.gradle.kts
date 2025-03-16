@@ -16,7 +16,7 @@ repositories {
 application {
     mainClass = "com.lavaloon.zatca.MainKt"
     // The ConvertPdfCommand generates invalid dates on Arabic locales if the JVM language isn't English
-    applicationDefaultJvmArgs = listOf("-Duser.language=en")
+    applicationDefaultJvmArgs = listOf("-Duser.language=en", "-Duser.timezone=Asia/Riyadh")
 }
 
 buildConfig {

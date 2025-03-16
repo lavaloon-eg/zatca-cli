@@ -12,6 +12,10 @@ to a section with the version name.
   * Spire.PDF free is limited to 10-page PDFs, which should work fine for invoices
   * We'll look into open-source alternatives for future-proofing
 
+* Fix Invoice validation failure due to difference between `IssueDate` & `SigningTime`
+  * Since the CLI uses the local time with `UTC` timezone this caused a delay in `SigningTime` against the ERP `IssueDate` i.e `IssueDate` is in the future, so timezone is now explicitly set to `Asia/Riyadh` timezone to overcome difference in between `SigningTime` and `IssueDate`.
+  * refer Business Rule: `BR-KSA-04`
+
 ## 2.4.0
 
 * Update ZATCA SDK from 238-R3.3.6 to 238-R3.3.9
