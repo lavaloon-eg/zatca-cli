@@ -8,6 +8,8 @@ to a section with the version name.
 
 ## Pending Changes
 
+* Update ZATCA SDK FROM 238-R3.3.9 to 238-R3.4.1
+
 ## 2.6.0
 
 * Fix Invoice validation failure due to difference between `IssueDate` & `SigningTime`

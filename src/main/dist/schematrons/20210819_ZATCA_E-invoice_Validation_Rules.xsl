@@ -335,6 +335,17 @@ The License text is included within the LICENSE.txt file in the root folder.
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>
+               <xsl:if test="(cbc:InvoiceTypeCode[substring(@name, 1, 2) = '02']) and (exists(cbc:IssueDate) and exists(cbc:IssueTime) and (current-dateTime() - xs:dateTime(concat(cbc:IssueDate, 'T', cbc:IssueTime))) > xs:dayTimeDuration('P1D'))">
+                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-98">
+                     <xsl:attribute name="test">
+                        exists(cbc:IssueDate) and exists(cbc:IssueTime)
+                        and (current-dateTime() - xs:dateTime(concat(cbc:IssueDate, 'T', cbc:IssueTime))) > xs:dayTimeDuration('P1D')
+                     </xsl:attribute>
+                     <svrl:text>[BR-KSA-98] - The Simplified invoice should be submitted within 24 hours of issuing the invoice.</svrl:text>
+                     <svrl:message-code>BR-KSA-98</svrl:message-code>
+                     <svrl:message-category>Business rules - integrity constraints (BR)</svrl:message-category>
+                  </svrl:failed-assert>
+               </xsl:if>
                <xsl:if test="exists(cac:ContractDocumentReference/cbc:ID) and string-length(cac:ContractDocumentReference/cbc:ID) &gt; 127">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-F-06-C5">
                      <xsl:attribute name="test">exists(cac:ContractDocumentReference/cbc:ID) and string-length(cac:ContractDocumentReference/cbc:ID) &gt; 127</xsl:attribute>
@@ -2913,7 +2924,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                <xsl:if test="not((cbc:ChargeIndicator) = false() or (cbc:ChargeIndicator) = true())">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="error" id="BR-KSA-EN16931-06">
                      <xsl:attribute name="test">(cbc:ChargeIndicator) = false()</xsl:attribute>
-                     <svrl:text>[BR-KSA-EN16931-06]-Charge on price level (BG-29) is allowed. The value of Indicator should be ' True'.</svrl:text>
+                     <svrl:text>[BR-KSA-EN16931-06]-Charge on price level (BG-29) is not allowed. The value of Indicator should be 'false'.</svrl:text>
                      <svrl:message-code>BR-KSA-EN16931-06</svrl:message-code>
                      <svrl:message-category>KSA - EN16931 (BR-KSA-EN16931)</svrl:message-category>
                   </svrl:failed-assert>
@@ -3067,7 +3078,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>
-               <xsl:if test="string-length(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail) &gt; 0 and not(exists(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail) and matches(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail,
+               <!-- <xsl:if test="string-length(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail) &gt; 0 and not(exists(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail) and matches(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail,
                '^(?:[a-zA-Z0-9](?:[_a-zA-Z0-9.-]*[a-zA-Z0-9_])?@(?:[a-zA-Z0-9]([-.\w]*[a-zA-Z0-9])+\.)+[a-zA-Z]{2,3}(?:;|$))+$'))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-86">
                      <xsl:attribute name="test">matches(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail, '^[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@(?:[0-9a-zA-Z]+\.)+[a-zA-Z]{2,3}$')</xsl:attribute>
@@ -3079,7 +3090,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                      <svrl:message-code>BR-KSA-86</svrl:message-code>
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
-               </xsl:if>
+               </xsl:if> -->
                <xsl:if test="exists(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:Name) and string-length(//cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:Name) &gt; 1000">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-F-06-C37">
                      <xsl:attribute name="test">

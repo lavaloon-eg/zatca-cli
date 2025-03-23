@@ -874,14 +874,33 @@ The copyright of CEN/EN 16931:2017 is owned by CEN and its members - the Europea
                      <svrl:message-category>Business rules - integrity constraints (BR)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>
-               <xsl:if test="exists(cac:Item/cbc:Name) and (string-length(cac:Item/cbc:Name) &gt; 1000 or string-length(cac:Item/cbc:Name) &lt; 1)">
+               <xsl:if test="exists(cac:Item/cbc:Name) and (string-length(cac:Item/cbc:Name) &gt; 1000 or string-length(cac:Item/cbc:Name) &lt; 3)">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-F-06-C19">
-                     <xsl:attribute name="test">exists(cac:Item/cbc:Name) and (string-length(cac:Item/cbc:Name) &gt; 1000 or string-length(cac:Item/cbc:Name) &lt; 1)</xsl:attribute>
-                     <svrl:text>[BR-KSA-F-06-C19] - Field character limits for Item name field (BT-153) have not been met. The minimum limit is 1 character and the maximum limit is 1000 characters.</svrl:text>
+                     <xsl:attribute name="test">exists(cac:Item/cbc:Name) and (string-length(cac:Item/cbc:Name) &gt; 1000 or string-length(cac:Item/cbc:Name) &lt; 3)</xsl:attribute>
+                     <svrl:text>[BR-KSA-F-06-C19] - Field character limits for Item name field (BT-153) have not been met. The minimum limit is 3 character and the maximum limit is 1000 characters.</svrl:text>
                      <svrl:message-code>BR-KSA-F-06-C19</svrl:message-code>
                      <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>
+
+               <xsl:if test="exists(cac:Item/cbc:Name) and
+              matches(cac:Item/cbc:Name, '^\d+$') and (
+                  matches(cac:Item/cbc:Name, '.*(012|123|234|345|456|567|678|789|890).*') or
+                  matches(cac:Item/cbc:Name, '.*(987|876|765|654|543|432|321|210).*') or
+                  matches(cac:Item/cbc:Name, '.*(\d)\1{2,}.*') or
+                  matches(cac:Item/cbc:Name, '^\d+$')
+              )">
+                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
+                                      location="{schxslt:location(.)}"
+                                      flag="warning"
+                                      id="BR-KSA-F-C-01">
+                     <svrl:text>[BR-KSA-F-C-01] - Please recheck Item Description (BT-153). Providing unclear description violates the requirements specified in Article 53 of VAT Regulations.</svrl:text>
+                     <svrl:message-code>BR-KSA-F-C-01</svrl:message-code>
+                     <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
+                  </svrl:failed-assert>
+               </xsl:if>
+
+
                <xsl:if test="not((cbc:ID) != '')">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-21">
                      <xsl:attribute name="test">(cbc:ID) != ''</xsl:attribute>
@@ -1255,20 +1274,20 @@ The copyright of CEN/EN 16931:2017 is owned by CEN and its members - the Europea
                   </xsl:otherwise>
                </xsl:choose>-->
 
-            <xsl:variable name="taxAmount" select="xs:double(./cbc:TaxAmount)"/>
+               <xsl:variable name="taxAmount" select="xs:double(./cbc:TaxAmount)"/>
                <xsl:variable name="taxableAmount" select="xs:double(./cbc:TaxableAmount)"/>
                <xsl:variable name="vatCategoryRate" select="xs:double(./cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:Percent)"/>
                <xsl:variable name="toleranceLimit" select="count(//cac:InvoiceLine) * 0.01" as="xs:float"/>
                <xsl:variable name="shouldBe" select="round(xs:double(format-number($taxableAmount * ($vatCategoryRate div 100), '0.00')) * 100) div 100"/>
                <xsl:variable name="upperLimit" select="round(($shouldBe + $toleranceLimit) * 100) div 100"/>
                <xsl:variable name="lowerLimit" select="round(($shouldBe - $toleranceLimit) * 100) div 100"/>
-               <xsl:variable name="checkTwo" select="($taxAmount &lt;= $upperLimit and $taxAmount &gt;= $lowerLimit) or ($taxAmount = $shouldBe)" as="xs:boolean"/>            
-               <xsl:if test="not($checkTwo)">  
+               <xsl:variable name="checkTwo" select="($taxAmount &lt;= $upperLimit and $taxAmount &gt;= $lowerLimit) or ($taxAmount = $shouldBe)" as="xs:boolean"/>
+               <xsl:if test="not($checkTwo)">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-CO-17">
-                  <xsl:attribute name="test">(round(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent)) = 0 and (round(xs:decimal(cbc:TaxAmount)) = 0)) or (round(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent)) != 0 and ((abs(xs:decimal(cbc:TaxAmount)) - 1 &lt; round(abs(xs:decimal(cbc:TaxableAmount)) * (cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) div 100) * 10 * 10) div 100 ) and (abs(xs:decimal(cbc:TaxAmount)) + 1 &gt; round(abs(xs:decimal(cbc:TaxableAmount)) * (cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) div 100) * 10 * 10) div 100 )))  or (not(exists(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent))) and (round(xs:decimal(cbc:TaxAmount)) = 0))</xsl:attribute>
-                  <svrl:text>[BR-CO-17]-VAT category tax amount (BT-117) = VAT category taxable amount (BT-116) x (VAT category rate (BT-119) / 100), rounded to two decimals.</svrl:text>
-                  <svrl:message-code>BR-CO-17</svrl:message-code>
-                  <svrl:message-category>Business rules - conditions (BR-CO)</svrl:message-category>
+                     <xsl:attribute name="test">(round(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent)) = 0 and (round(xs:decimal(cbc:TaxAmount)) = 0)) or (round(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent)) != 0 and ((abs(xs:decimal(cbc:TaxAmount)) - 1 &lt; round(abs(xs:decimal(cbc:TaxableAmount)) * (cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) div 100) * 10 * 10) div 100 ) and (abs(xs:decimal(cbc:TaxAmount)) + 1 &gt; round(abs(xs:decimal(cbc:TaxableAmount)) * (cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent) div 100) * 10 * 10) div 100 )))  or (not(exists(cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/xs:decimal(cbc:Percent))) and (round(xs:decimal(cbc:TaxAmount)) = 0))</xsl:attribute>
+                     <svrl:text>[BR-CO-17]-VAT category tax amount (BT-117) = VAT category taxable amount (BT-116) x (VAT category rate (BT-119) / 100), rounded to two decimals.</svrl:text>
+                     <svrl:message-code>BR-CO-17</svrl:message-code>
+                     <svrl:message-category>Business rules - conditions (BR-CO)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>
 
@@ -1469,7 +1488,7 @@ The copyright of CEN/EN 16931:2017 is owned by CEN and its members - the Europea
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">/*/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory[normalize-space(cbc:ID) = 'S'][cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']</xsl:attribute>
                </svrl:fired-rule>
-               <xsl:if test="count(/*/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory[normalize-space(cbc:ID) = 'S'][cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT'])&gt; 0 and not(exists(../../../cac:AllowanceCharge/cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:ID[normalize-space(.) = 'S']) or exists(../../../cac:InvoiceLine[cac:Item/cac:ClassifiedTaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:ID[normalize-space(.) = 'S']])) or not( (xs:decimal(../cbc:TaxableAmount) =(sum(../../../cac:InvoiceLine[cac:Item/cac:ClassifiedTaxCategory/normalize-space(cbc:ID)='S']/xs:decimal(cbc:LineExtensionAmount))  + sum(../../../cac:AllowanceCharge[cbc:ChargeIndicator=true()][cac:TaxCategory/normalize-space(cbc:ID)='S']/xs:decimal(cbc:Amount)) - sum(../../../cac:AllowanceCharge[cbc:ChargeIndicator=false()][cac:TaxCategory/normalize-space(cbc:ID)='S']/xs:decimal(cbc:Amount)) )))">
+               <xsl:if test="count(/*/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory[normalize-space(cbc:ID) = 'S'][cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT'])&gt; 0 and not(exists(../../../cac:AllowanceCharge/cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:ID[normalize-space(.) = 'S']) or exists(../../../cac:InvoiceLine[cac:Item/cac:ClassifiedTaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:ID[normalize-space(.) = 'S']])) or not( sum((../../cac:TaxSubtotal[cac:TaxCategory/normalize-space(cbc:ID)='S']/xs:decimal(cbc:TaxableAmount)))=(sum(../../../cac:InvoiceLine[cac:Item/cac:ClassifiedTaxCategory/normalize-space(cbc:ID)='S']/xs:decimal(cbc:LineExtensionAmount) )  + sum(../../../cac:AllowanceCharge[cbc:ChargeIndicator=true()][cac:TaxCategory/normalize-space(cbc:ID)='S']/xs:decimal(cbc:Amount)) - sum(../../../cac:AllowanceCharge[cbc:ChargeIndicator=false()][cac:TaxCategory/normalize-space(cbc:ID)='S']/xs:decimal(cbc:Amount)) ))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-S-08">
                      <xsl:attribute name="test">count(/*/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory[normalize-space(cbc:ID) = 'S'][cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT'])&gt; 0 and (exists(../../../cac:AllowanceCharge/cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:ID[normalize-space(.) = 'S']) or exists(../../../cac:InvoiceLine[cac:Item/cac:ClassifiedTaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:ID[normalize-space(.) = 'S']])) or ((xs:decimal(../cbc:TaxableAmount) =(sum(../../../cac:InvoiceLine[cac:Item/cac:ClassifiedTaxCategory/normalize-space(cbc:ID)='S']/xs:decimal(cbc:LineExtensionAmount))  + sum(../../../cac:AllowanceCharge[cbc:ChargeIndicator=true()][cac:TaxCategory/normalize-space(cbc:ID)='S']/xs:decimal(cbc:Amount)) - sum(../../../cac:AllowanceCharge[cbc:ChargeIndicator=false()][cac:TaxCategory/normalize-space(cbc:ID)='S']/xs:decimal(cbc:Amount)) )))</xsl:attribute>
                      <svrl:text>[BR-S-08]-In a VAT breakdown (BG-23) where the VAT category code (BT-118) is " Standard rated" the VAT category taxable amount (BT-116) shall equal the sum of Invoice line net amounts (BT-131) minus the sum of Document level allowance amounts (BT-92) plus the sum of Document level charge amounts (BT-99) where the VAT category codes (BT-151, BT-95, BT-102) are "Standard Rate".</svrl:text>
@@ -1494,7 +1513,7 @@ The copyright of CEN/EN 16931:2017 is owned by CEN and its members - the Europea
                      <svrl:message-category>Business rules - VAT standard and reduced rate (BR-S)</svrl:message-category>
                   </svrl:failed-assert>
                </xsl:if>-->
-              <xsl:variable name="taxAmount" select="xs:double(../cbc:TaxAmount)"/>
+               <xsl:variable name="taxAmount" select="xs:double(../cbc:TaxAmount)"/>
                <xsl:variable name="taxableAmount" select="xs:double(../cbc:TaxableAmount)"/>
                <xsl:variable name="vatCategoryRate" select="xs:double(../cac:TaxCategory[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:Percent)"/>
                <xsl:variable name="toleranceLimit" select="count(//cac:InvoiceLine) * 0.01" as="xs:float"/>
