@@ -8,6 +8,8 @@ to a section with the version name.
 
 ## Pending Changes
 
+* Update ZATCA SDK FROM 238-R3.4.2 to 238-R3.4.4
+
 ## 2.8.0
 
 * Update ZATCA SDK FROM 238-R3.4.1 to 238-R3.4.2
