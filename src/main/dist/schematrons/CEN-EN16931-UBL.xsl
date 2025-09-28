@@ -567,41 +567,41 @@ The copyright of CEN/EN 16931:2017 is owned by CEN and its members - the Europea
          </xsl:otherwise>
       </xsl:choose>
    </xsl:template>
-   <xsl:template match="cbc:InvoiceTypeCode[substring(@name, 1, 2) = '01']" priority="29" mode="d7e42">
-      <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
-      <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd7e42']">
-            <schxslt:rule pattern="d7e42">
-               <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cbc:InvoiceTypeCode[substring(@name, 1, 2) = '01']" shadowed by preceding rule</xsl:comment>
-               <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
-                  <xsl:attribute name="context">cbc:InvoiceTypeCode[substring(@name, 1, 2) = '01']</xsl:attribute>
-               </svrl:suppressed-rule>
-            </schxslt:rule>
-            <xsl:next-match>
-               <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="$schxslt:patterns-matched"/>
-            </xsl:next-match>
-         </xsl:when>
-         <xsl:otherwise>
-            <schxslt:rule pattern="d7e42">
-               <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
-                  <xsl:attribute name="context">cbc:InvoiceTypeCode[substring(@name, 1, 2) = '01']</xsl:attribute>
-               </svrl:fired-rule>
-               <xsl:if test="boolean(//*[matches(@name, '01\d{5}')]) ">
-                  <xsl:if test="not (string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode) &gt; 0 and string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName) &gt; 0   and string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName) &gt; 0 and string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:PostalZone) &gt; 0 and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName) and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName) and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:PostalZone) and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode))">                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-10">
-                     <xsl:attribute name="test">exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName) and         exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:BuildingNumber) and         exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName) and         exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:PostalZone) and         exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode)</xsl:attribute>
-                     <svrl:text>[BR-10]-An Invoice shall contain the Buyer postal address (BG-8).Not applicable for simplified tax invoices and associated credit notes and debit notes (KSA-2, position 1 and 2 = 02).</svrl:text>
-                     <svrl:message-code>BR-10</svrl:message-code>
-                     <svrl:message-category>Business rules - integrity constraints (BR)</svrl:message-category>
-                  </svrl:failed-assert>
-                  </xsl:if>
-               </xsl:if>
-            </schxslt:rule>
-            <xsl:next-match>
-               <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="($schxslt:patterns-matched, 'd7e42')"/>
-            </xsl:next-match>
-         </xsl:otherwise>
-      </xsl:choose>
-   </xsl:template>
+<!--   <xsl:template match="cbc:InvoiceTypeCode[substring(@name, 1, 2) = '01']" priority="29" mode="d7e42">-->
+<!--      <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>-->
+<!--      <xsl:choose>-->
+<!--         <xsl:when test="$schxslt:patterns-matched[. = 'd7e42']">-->
+<!--            <schxslt:rule pattern="d7e42">-->
+<!--               <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cbc:InvoiceTypeCode[substring(@name, 1, 2) = '01']" shadowed by preceding rule</xsl:comment>-->
+<!--               <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">-->
+<!--                  <xsl:attribute name="context">cbc:InvoiceTypeCode[substring(@name, 1, 2) = '01']</xsl:attribute>-->
+<!--               </svrl:suppressed-rule>-->
+<!--            </schxslt:rule>-->
+<!--            <xsl:next-match>-->
+<!--               <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="$schxslt:patterns-matched"/>-->
+<!--            </xsl:next-match>-->
+<!--         </xsl:when>-->
+<!--         <xsl:otherwise>-->
+<!--            <schxslt:rule pattern="d7e42">-->
+<!--               <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">-->
+<!--                  <xsl:attribute name="context">cbc:InvoiceTypeCode[substring(@name, 1, 2) = '01']</xsl:attribute>-->
+<!--               </svrl:fired-rule>-->
+<!--               <xsl:if test="boolean(//*[matches(@name, '01\d{5}')]) ">-->
+<!--                  <xsl:if test="not (string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode) &gt; 0 and string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName) &gt; 0   and string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName) &gt; 0 and string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:PostalZone) &gt; 0 and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName) and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName) and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:PostalZone) and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode))">                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-10">-->
+<!--                     <xsl:attribute name="test">exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName) and         exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:BuildingNumber) and         exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName) and         exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:PostalZone) and         exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode)</xsl:attribute>-->
+<!--                     <svrl:text>[BR-10]-An Invoice shall contain the Buyer postal address (BG-8).Not applicable for simplified tax invoices and associated credit notes and debit notes (KSA-2, position 1 and 2 = 02).</svrl:text>-->
+<!--                     <svrl:message-code>BR-10</svrl:message-code>-->
+<!--                     <svrl:message-category>Business rules - integrity constraints (BR)</svrl:message-category>-->
+<!--                  </svrl:failed-assert>-->
+<!--                  </xsl:if>-->
+<!--               </xsl:if>-->
+<!--            </schxslt:rule>-->
+<!--            <xsl:next-match>-->
+<!--               <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="($schxslt:patterns-matched, 'd7e42')"/>-->
+<!--            </xsl:next-match>-->
+<!--         </xsl:otherwise>-->
+<!--      </xsl:choose>-->
+<!--   </xsl:template>-->
    <xsl:template match="/ubl:Invoice | /cn:CreditNote" priority="28" mode="d7e42">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>

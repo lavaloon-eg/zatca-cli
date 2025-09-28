@@ -989,7 +989,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                   <xsl:attribute name="context">cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID</xsl:attribute>
                </svrl:fired-rule>
                <xsl:if test="not( string-length(normalize-space( ./@schemeID)) &gt; 2 and contains(' CRN MOM MLS SAG OTH 700 ', ./@schemeID)  and (matches((.), '^[a-zA-Z0-9]*$')) )">
-                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="error" id="BR-KSA-08">
+                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-08">
                      <xsl:attribute name="test">not( string-length(normalize-space( ./@schemeID)) &gt; 2 and contains('CRN MOM MLS SAG OTH 700', ./@schemeID)  and (matches((.), '^[a-zA-Z0-9]*$')) )</xsl:attribute>
                      <svrl:text>[BR-KSA-08]-The seller identification (BT-29) must exist only once with one of the scheme ID (BT-29-1) (CRN, MOM, MLS, SAG, OTH, 700) and must contain only alphanumeric characters. Commercial Registration number with "CRN" as schemeID. MOMRAH license with "MOM" as schemeID. MHRSD license with "MLS" as schemeID. 700 Number with "700" as schemeID. MISA license with "SAG" as schemeID. Other OD with "OTH" as schemeID. In case of multiple commercial registrations, the seller should fill the commercial registration of the branch in respect of which the Tax Invoice is being issued. In case multiple IDs exist then one of the above must be entered following the sequence specified above.</svrl:text>
                      <svrl:message-code>BR-KSA-08</svrl:message-code>
@@ -1050,7 +1050,71 @@ The License text is included within the LICENSE.txt file in the root folder.
                <svrl:message-category>KSA - custom rules</svrl:message-category>
             </svrl:failed-assert>
          </xsl:if>
+         <!-- start new role sprint 14-->
+         <!-- Determine context-specific labels for messages -->
+         <xsl:variable name="is-supplier" select="self::cac:AccountingSupplierParty"/>
+         <xsl:variable name="bt-label"     select="if ($is-supplier) then 'BT-29-1' else 'BT-46-1'"/>
+         <xsl:variable name="party-label"  select="if ($is-supplier) then 'Seller'  else 'Buyer'"/>
+         <!-- Allowed schemeIDs per context (keep uppercase literals) TIN NAT IQA PAS CRN MOM MLS 700 SAG GCC OTH -->
+         <xsl:variable name="allowed-buyer"
+                       select="('TIN','CRN','MOM','MLS','700','SAG','NAT','GCC','IQA','OTH','PAS')"/>
+         <xsl:variable name="allowed-seller"
+                       select="('CRN','MOM','MLS','700','SAG','OTH')"/>
+         <xsl:variable name="allowed-here"
+                       select="if ($is-supplier) then $allowed-seller else $allowed-buyer"/>
+         <!-- The actual @schemeID (raw/trimmed/uppercased) -->
+         <xsl:variable name="scheme-raw"
+                       select="string(cac:Party/cac:PartyIdentification/cbc:ID/@schemeID)"/>
+         <xsl:variable name="scheme-trim"  select="normalize-space($scheme-raw)"/>
+         <xsl:variable name="scheme-up"    select="upper-case($scheme-trim)"/>
+         <!-- Candidate IDs with an allowed schemeID for this context -->
+         <xsl:variable name="ids-allowed"
+                       select="cac:Party/cac:PartyIdentification/cbc:ID[
+           upper-case(normalize-space(@schemeID)) = $allowed-here
+         ]"/>
+         <!-- BR-KSA-F-12: allowed scheme but with leading/trailing spaces in @schemeID -->
+         <xsl:if test="$scheme-raw
+             and $scheme-up = $allowed-here
+             and $scheme-raw != $scheme-trim">
+            <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
+                                location="{schxslt:location(.)}"
+                                flag="warning"
+                                id="BR-KSA-F-12">
+               <xsl:attribute name="test">
+                  $scheme-raw and $scheme-up = $allowed-here and $scheme-raw != $scheme-trim
+               </xsl:attribute>
+               <svrl:text>
+                  [BR-KSA-F-12] - The Other Seller/Buyer schema ID (BT-29-1 or BT-46-1) contains spaces. Please recheck the attribute and remove the empty space to avoid non-compliance.
+               </svrl:text>
+               <svrl:message-code>BR-KSA-F-12</svrl:message-code>
+               <svrl:message-category>KSA - custom rules</svrl:message-category>
+            </svrl:failed-assert>
+         </xsl:if>
+         <!-- BR-KSA-F-13: ONLY check IDs whose schemeID is allowed -->
+         <xsl:variable name="bad-pattern-exists"
+                       select="exists($ids-allowed[
+           matches(normalize-space(.), '^\d+$') and
+           (
+             matches(normalize-space(.), '(01234567|12345678|23456789)') or
+             matches(normalize-space(.), '(76543210|87654321|98765432)') or
+             matches(normalize-space(.), '(00000000|11111111|22222222|33333333|44444444|55555555|66666666|77777777|88888888|99999999)')
+           )
+         ])"/>
 
+         <xsl:if test="$bad-pattern-exists">
+            <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
+                                location="{schxslt:location(.)}"
+                                flag="warning"
+                                id="BR-KSA-F-13">
+               <xsl:attribute name="test">$bad-pattern-exists</xsl:attribute>
+               <svrl:text>
+                  [BR-KSA-F-13] - Please recheck Other Seller/Buyer ID (BT-29 or BT-46) as it contains an invalid value.
+               </svrl:text>
+               <svrl:message-code>BR-KSA-F-13</svrl:message-code>
+               <svrl:message-category>KSA - custom rules</svrl:message-category>
+            </svrl:failed-assert>
+         </xsl:if>
+         <!-- end new role sprint 14-->
       </schxslt:rule>
       <xsl:next-match>
          <xsl:with-param name="schxslt:patterns-matched" as="xs:string*" select="($schxslt:patterns-matched, 'd7e29')"/>
@@ -1813,7 +1877,7 @@ The License text is included within the LICENSE.txt file in the root folder.
                   <xsl:if test="not (string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode) &gt; 0 and string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName) &gt; 0   and string-length(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName) &gt; 0 and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName) and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName)  and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode))">
                      <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl" location="{schxslt:location(.)}" flag="warning" id="BR-KSA-10">
                         <xsl:attribute name="test">  exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName) and   exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName) and   exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:PostalZone) and exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName) and  exists(//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode)</xsl:attribute>
-                        <svrl:text>[BR-KSA-10]-Buyer address must contain a street (BT-50), city (BT-52), country code (BT-55). This rule does not apply on the simplified tax invoices and associated credit notes and debit notes (KSA-2, position 1 and 2 = 02).</svrl:text>
+                        <svrl:text>[BR-KSA-10]-Where the Buyer Country Code (BT-55) is other than 'SA' Buyer address must contain a street (BT-50), city (BT-52), country code (BT-55). This rule does not apply on the simplified tax invoices and associated credit notes and debit notes (KSA-2, position 1 and 2 = 02).</svrl:text>
                         <svrl:message-code>BR-KSA-10</svrl:message-code>
                         <svrl:message-category>KSA - business rules (BR-KSA)</svrl:message-category>
                      </svrl:failed-assert>
